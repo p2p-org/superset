@@ -44,20 +44,20 @@ jobs:
     steps:
       - name: Check out source repository
         id: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: "${{ inputs.python-version-file }}"
+          cache: 'pip'
 
       - name: Install uv package
         id: uv-install
         uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        id: setup-python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "${{ inputs.python-version-file }}"
-          cache: 'pip'
 
       - name: Install the project
         id: uv-project
