@@ -26,7 +26,7 @@ jobs:
 
     # Outputs
     outputs:
-      results: ${{ steps.lint.outputs }}
+      results: ${{ steps.lint.outputs.stdout }}
 
     # Steps
     steps:
