@@ -31,7 +31,6 @@ jobs:
     runs-on: small
     container:
       image: p2p/ubuntu24:latest
-      options: --user 1000:1000  # Run as non-root inside container
     permissions:
       contents: read
 
