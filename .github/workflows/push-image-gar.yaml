@@ -2,11 +2,6 @@ name: Build and push image to GCP
 on:
   workflow_call:
     inputs:
-      push-on-branch:
-        description: The branch to push the to GCP on
-        required: true
-        type: string
-        default: main
       docker-image-namespace:
         description: The image namespace
         required: true

@@ -2,11 +2,6 @@ name: Build and push image to Kratos
 on:
   workflow_call:
     inputs:
-      push-on-branch:
-        description: The branch to push the to GCP on
-        required: true
-        type: string
-        default: main
       docker-image-namespace:
         description: The image namespace
         required: true
@@ -35,8 +30,6 @@ on:
 jobs:
   image-build:
     name: Build Image and Push
-#    needs: [flake8-lint, run-pytest]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/${{ inputs.push-on-branch }}'
     runs-on: small
     container:
       image: p2p/ubuntu24:latest
