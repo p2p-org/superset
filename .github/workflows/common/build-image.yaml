@@ -1,0 +1,91 @@
+name: Build and push image
+on:
+  workflow_call:
+    inputs:
+      gcr-namespace:
+        description: The gcr namespace
+        required: true
+        type: string
+      gcr-repository:
+        description: The gcs repository name
+        required: true
+        type: string
+      docker-image-name:
+        description: The name of the Docker image
+        required: true
+        type: string
+      dockerfile-path:
+        description: The dockerfile to use for building the image
+        required: true
+        type: string
+
+    outputs:
+      results:
+        description: Results of flake8
+        value: ${{ jobs.flake8-lint.outputs.results }}
+
+jobs:
+  image-build:
+    name: Build Image and Push
+#    needs: [flake8-lint, run-pytest]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: small
+    container:
+      image: p2p/ubuntu24:latest
+    outputs:
+      tag: ${{ steps.meta.outputs.version }}
+      image: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Check out source repository
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "${{ inputs.python-version-file }}"
+
+      - name: Install toml module
+        id: install-toml
+        run: pip install toml
+
+      - name: Get image version from pyproject.toml
+        id: get-version
+        run: |
+          VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Set docker metadata
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: "kcr.infra.p2p.org/${{ inputs.gcr-namespace }}/${{ inputs.gcr-repository }}/${{ inputs.docker-image-name }}"
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+
+      - name: Print tags
+        id: tags
+        run: |
+          echo "Using tags: ${{ steps.docker-meta.outputs.tags }}"
+
+      - name: Build image
+        uses: redhat-actions/buildah-build@v2
+        id: build
+        with:
+          image: ${{ steps.docker-meta.outputs.image }}
+          context: .
+          containerfiles: ${{ inputs.dockerfile-path }} # ./Dockerfile
+          tags: ${{ steps.docker-meta.outputs.tags }}
+
+      - name: Push image
+        uses: redhat-actions/push-to-registry@v2
+        id: push
+        with:
+          image: ${{ steps.build.outputs.image }}
+          tags: ${{ steps.build.outputs.tags }}
+          username: ${{ secrets.KCR_USER }}
+          password: ${{ secrets.KCR_PASSWORD }}

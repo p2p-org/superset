@@ -1,0 +1,51 @@
+name: Lint code repository
+on:
+  workflow_call:
+    inputs:
+      lint-path:
+        description: Path to lint files for
+        required: true
+        type: string
+
+    outputs:
+      lint-results:
+        description: Results of flake8
+        value: ${{ jobs.flake8-lint.outputs.results }}
+
+jobs:
+
+  flake8-lint:
+
+    # Job config
+    name: Lint code with flake8
+    runs-on: small
+    container:
+      image: p2p/ubuntu24:latest
+    permissions:
+      contents: read
+
+    # Outputs
+    outputs:
+      results: ${{ steps.lint.outputs }}
+
+    # Steps
+    steps:
+      - name: Check out source repository
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python environment
+        id: setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+
+      - name: flake8 Lint
+        id: lint
+        uses: py-actions/flake8@v2
+        with:
+          path: "${{ inputs.lint-path }}"
+          args: "--config=setup.cfg"

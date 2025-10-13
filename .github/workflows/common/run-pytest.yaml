@@ -1,0 +1,72 @@
+name: Run unit and integration tests
+on:
+  workflow_call:
+    inputs:
+      python-version-file:
+        description: Version file to use for python version
+        required: true
+        type: string
+      unit-test-path:
+        description: Path where unit tests are located
+        required: true
+        type: string
+      integration-test-path:
+        description: Path where integration tests are located
+        required: true
+        type: string
+
+    outputs:
+      flake8-results:
+        description: Result of flake8
+        value: ${{ jobs.flake8-lint.outputs.results }}
+
+jobs:
+  run-pytest:
+
+    # Job config
+    name: Run pytest
+    runs-on: small
+    container:
+      image: p2p/ubuntu24:latest
+    permissions:
+      contents: read
+
+    # Outputs
+    outputs:
+      unit-tests:
+        description: Results of running unit tests
+        value: ${{ steps.unit-tests.outputs }}
+      integration-tests:
+        description: Results of running integration tests
+        value: ${{ steps.integration-tests.outputs }}
+
+    # Steps
+    steps:
+      - name: Check out source repository
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install uv package
+        id: uv-install
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "${{ inputs.python-version-file }}"
+
+      - name: Install the project
+        id: uv-install
+        run: uv sync --all-extras --dev
+
+      - name: Run unit tests
+        id: unit-tests
+        run: uv run pytest "${{ inputs.unit-test-path }}" -v --cov=src --cov-report=term-missing
+
+      - name: Run integration tests
+        id: integration-tests
+        run: uv run pytest "${{ inputs.integration-test-path }}" -v
+        continue-on-error: true  # Integration tests may require external services
