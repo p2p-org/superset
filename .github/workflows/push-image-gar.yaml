@@ -2,18 +2,18 @@ name: Build and push image to GCP
 on:
   workflow_call:
     inputs:
-      branch-to-push:
+      push-on-branch:
         description: The branch to push the to GCP on
         required: true
         type: string
         default: main
-      gcr-namespace:
-        description: The gcr namespace
+      docker-image-namespace:
+        description: The image namespace
         required: true
         type: string
         default: p2p-data-warehouse
-      gcr-repository:
-        description: The gcs repository name
+      docker-image-repository:
+        description: The image repository name
         required: true
         type: string
       docker-image-name:
@@ -36,7 +36,7 @@ on:
 jobs:
   docker-build:
     name: Docker Build & Push to GCP
-    if: github.event_name == 'push' && github.ref == 'refs/heads/${{ inputs.branch-to-push }}'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/${{ inputs.push-on-branch }}'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -68,7 +68,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: us-central1-docker.pkg.dev/${{ inputs.gcr-namespace }}/${{ inputs.gcr-repository }}/${{ inputs.docker-image-name }}
+          images: us-central1-docker.pkg.dev/${{ inputs.docker-image-namespace }}/${{ inputs.docker-image-repository }}/${{ inputs.docker-image-name }}
           tags: |
             type=raw,value=${{ env.VERSION }}
 

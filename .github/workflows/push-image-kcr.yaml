@@ -2,17 +2,17 @@ name: Build and push image to Kratos
 on:
   workflow_call:
     inputs:
-      branch-to-push:
+      push-on-branch:
         description: The branch to push the to GCP on
         required: true
         type: string
         default: main
-      kcr-namespace:
-        description: The kcr namespace
+      docker-image-namespace:
+        description: The image namespace
         required: true
         type: string
-      kcr-repository:
-        description: The kcr repository name
+      docker-image-repository:
+        description: The image repository name
         required: true
         type: string
       docker-image-name:
@@ -36,7 +36,7 @@ jobs:
   image-build:
     name: Build Image and Push
 #    needs: [flake8-lint, run-pytest]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/${{ inputs.branch-to-push }}'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/${{ inputs.push-on-branch }}'
     runs-on: small
     container:
       image: p2p/ubuntu24:latest
@@ -71,7 +71,7 @@ jobs:
         id: docker-meta
         uses: docker/metadata-action@v5
         with:
-          images: "kcr.infra.p2p.org/${{ inputs.kcr-namespace }}/${{ inputs.kcr-repository }}/${{ inputs.docker-image-name }}"
+          images: "kcr.infra.p2p.org/${{ inputs.docker-image-namespace }}/${{ inputs.docker-image-repository }}/${{ inputs.docker-image-name }}"
           tags: |
             type=raw,value=${{ env.VERSION }}
 
