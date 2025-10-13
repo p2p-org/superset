@@ -1,4 +1,4 @@
-name: Build and push image to GCP
+name: Build and push image to GAR
 on:
   workflow_call:
     inputs:
@@ -30,7 +30,7 @@ on:
 
 jobs:
   docker-build:
-    name: Docker Build & Push to GCP
+    name: Docker Build & Push to GAR
     runs-on: ubuntu-latest
     permissions:
       contents: read

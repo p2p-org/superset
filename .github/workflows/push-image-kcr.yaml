@@ -1,4 +1,4 @@
-name: Build and push image to Kratos
+name: Build and push image to KCR
 on:
   workflow_call:
     inputs:
@@ -29,7 +29,7 @@ on:
 
 jobs:
   image-build:
-    name: Build Image and Push
+    name: Build Image and Push to KCR
     runs-on: small
     container:
       image: p2p/ubuntu24:latest
