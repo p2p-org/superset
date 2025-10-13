@@ -25,20 +25,15 @@ jobs:
 
     # Job config
     name: Run pytest
+    # Outputs
+    outputs:
+      unit-tests: ${{ steps.unit-tests.outputs.result }}
+      integration-tests: ${{ steps.integration-tests.outputs.result }}
     runs-on: small
     container:
       image: p2p/ubuntu24:latest
     permissions:
       contents: read
-
-    # Outputs
-    outputs:
-      unit-tests:
-        description: Results of running unit tests
-        value: ${{ steps.unit-tests.outputs }}
-      integration-tests:
-        description: Results of running integration tests
-        value: ${{ steps.integration-tests.outputs }}
 
     # Steps
     steps:
@@ -59,7 +54,7 @@ jobs:
           python-version-file: "${{ inputs.python-version-file }}"
 
       - name: Install the project
-        id: uv-install
+        id: uv-project
         run: uv sync --all-extras --dev
 
       - name: Run unit tests
