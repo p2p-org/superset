@@ -16,24 +16,29 @@ on:
         type: string
 
     outputs:
-      flake8-results:
-        description: Result of flake8
-        value: ${{ jobs.flake8-lint.outputs.results }}
+      unit-tests-results:
+        description: Unit tests results
+        value: ${{ jobs.run-pytest.outputs.unit-tests-results }}
+      integration-tests-results:
+        description: Integration tests results
+        value: ${{ jobs.run-pytest.outputs.integration-tests-results }}
 
 jobs:
   run-pytest:
 
     # Job config
     name: Run pytest
-    # Outputs
-    outputs:
-      unit-tests: ${{ steps.unit-tests.outputs.result }}
-      integration-tests: ${{ steps.integration-tests.outputs.result }}
     runs-on: small
     container:
       image: p2p/ubuntu24:latest
     permissions:
       contents: read
+
+    # Outputs
+    outputs:
+      unit-tests-results: ${{ steps.unit-tests.outputs.status }}
+      integration-tests-results: ${{ steps.integration-tests.outputs.status }}
+
 
     # Steps
     steps:
@@ -59,9 +64,17 @@ jobs:
 
       - name: Run unit tests
         id: unit-tests
-        run: uv run pytest "${{ inputs.unit-test-path }}" -v --cov=src --cov-report=term-missing
+        run: |
+          set +e
+          uv run pytest "${{ inputs.unit-test-path }}" -v --cov=src --cov-report=term-missing
+          echo "status=$?" >> $GITHUB_OUTPUT
+          set -e
 
       - name: Run integration tests
         id: integration-tests
-        run: uv run pytest "${{ inputs.integration-test-path }}" -v
+        run: |
+          set +e
+          uv run pytest "${{ inputs.integration-test-path }}" -v
+          echo "status=$?" >> $GITHUB_OUTPUT
+          set -e
         continue-on-error: true  # Integration tests may require external services
