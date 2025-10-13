@@ -10,14 +10,14 @@ on:
     outputs:
       lint-results:
         description: Results of flake8
-        value: ${{ jobs.flake8-lint.outputs.results }}
+        value: ${{ jobs.lint.outputs.results }}
 
 jobs:
 
-  flake8-lint:
+  lint:
 
     # Job config
-    name: Lint code with flake8
+    name: Lint code
     runs-on: small
     container:
       image: p2p/ubuntu24:latest

@@ -18,16 +18,16 @@ on:
     outputs:
       unit-tests-results:
         description: Unit tests results
-        value: ${{ jobs.run-pytest.outputs.unit-tests-results }}
+        value: ${{ jobs.pytest.outputs.unit-tests-results }}
       integration-tests-results:
         description: Integration tests results
-        value: ${{ jobs.run-pytest.outputs.integration-tests-results }}
+        value: ${{ jobs.pytest.outputs.integration-tests-results }}
 
 jobs:
-  run-pytest:
+  pytest:
 
     # Job config
-    name: Run pytest
+    name: Run tests
     runs-on: small
     container:
       image: p2p/ubuntu24:latest
