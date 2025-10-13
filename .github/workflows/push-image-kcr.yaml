@@ -1,13 +1,18 @@
-name: Build and push image
+name: Build and push image to Kratos
 on:
   workflow_call:
     inputs:
-      gcr-namespace:
-        description: The gcr namespace
+      branch-to-push:
+        description: The branch to push the to GCP on
         required: true
         type: string
-      gcr-repository:
-        description: The gcs repository name
+        default: main
+      kcr-namespace:
+        description: The kcr namespace
+        required: true
+        type: string
+      kcr-repository:
+        description: The kcr repository name
         required: true
         type: string
       docker-image-name:
@@ -20,21 +25,24 @@ on:
         type: string
 
     outputs:
-      results:
-        description: Results of flake8
-        value: ${{ jobs.flake8-lint.outputs.results }}
+      image-version:
+        description: Image version
+        value: ${{ jobs.image-build.outputs.version }}
+      image-tags:
+        description: Image tags
+        value: ${{ jobs.image-build.outputs.tags }}
 
 jobs:
   image-build:
     name: Build Image and Push
 #    needs: [flake8-lint, run-pytest]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/${{ inputs.branch-to-push }}'
     runs-on: small
     container:
       image: p2p/ubuntu24:latest
     outputs:
-      tag: ${{ steps.meta.outputs.version }}
-      image: ${{ steps.meta.outputs.tags }}
+      version: ${{ steps.meta.outputs.version }}
+      tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Check out source repository
         id: checkout
@@ -63,7 +71,7 @@ jobs:
         id: docker-meta
         uses: docker/metadata-action@v5
         with:
-          images: "kcr.infra.p2p.org/${{ inputs.gcr-namespace }}/${{ inputs.gcr-repository }}/${{ inputs.docker-image-name }}"
+          images: "kcr.infra.p2p.org/${{ inputs.kcr-namespace }}/${{ inputs.kcr-repository }}/${{ inputs.docker-image-name }}"
           tags: |
             type=raw,value=${{ env.VERSION }}
 

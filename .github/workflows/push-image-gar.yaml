@@ -1,0 +1,99 @@
+name: Build and push image to GCP
+on:
+  workflow_call:
+    inputs:
+      branch-to-push:
+        description: The branch to push the to GCP on
+        required: true
+        type: string
+        default: main
+      gcr-namespace:
+        description: The gcr namespace
+        required: true
+        type: string
+        default: p2p-data-warehouse
+      gcr-repository:
+        description: The gcs repository name
+        required: true
+        type: string
+      docker-image-name:
+        description: The name of the Docker image
+        required: true
+        type: string
+      dockerfile-path:
+        description: The dockerfile to use for building the image
+        required: true
+        type: string
+
+    outputs:
+      image-version:
+        description: Image version
+        value: ${{ jobs.image-build.outputs.version }}
+      image-tags:
+        description: Image tags
+        value: ${{ jobs.image-build.outputs.tags }}
+
+jobs:
+  docker-build:
+    name: Docker Build & Push to GCP
+    if: github.event_name == 'push' && github.ref == 'refs/heads/${{ inputs.branch-to-push }}'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      tag: ${{ steps.meta.outputs.version }}
+      author-name: ${{ steps.author-name.outputs.author-name }}
+      author-email: ${{ steps.author-email.outputs.author-email }}
+    steps:
+      - name: Checkout code
+        id: checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Docker Buildx
+        id: build
+        uses: docker/setup-buildx-action@v3.8.0
+
+      - name: Install toml module
+        id: install-toml
+        run: pip install toml
+
+      - name: Get version from pyproject.toml
+        id: get-version
+        run: |
+          VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: us-central1-docker.pkg.dev/${{ inputs.gcr-namespace }}/${{ inputs.gcr-repository }}/${{ inputs.docker-image-name }}
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+
+      - name: Auth to GCP
+        id: auth
+        uses: google-github-actions/auth@v2.1.7
+        with:
+          token_format: access_token
+          service_account: dwh-github-actions-push@p2p-data-warehouse.iam.gserviceaccount.com
+          workload_identity_provider: projects/285170340050/locations/global/workloadIdentityPools/dwh-github-actions/providers/github-dwh-repos
+
+      - name: Login to GAR
+        uses: docker/login-action@v3.3.0
+        with:
+          registry: us-central1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Print tags
+        run: |
+          echo "Using tags: ${{ steps.meta.outputs.tags }}"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
