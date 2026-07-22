@@ -75,7 +75,7 @@ jobs:
           workload_identity_provider: projects/285170340050/locations/global/workloadIdentityPools/dwh-github-actions/providers/github-dwh-repos
 
       - name: Login to GAR
-        uses: docker/login-action@v3.3.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: us-central1-docker.pkg.dev
           username: oauth2accesstoken
