@@ -68,7 +68,7 @@ jobs:
 
       - name: Auth to GCP
         id: auth
-        uses: google-github-actions/auth@v2.1.7
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
         with:
           token_format: access_token
           service_account: dwh-github-actions-push@p2p-data-warehouse.iam.gserviceaccount.com
